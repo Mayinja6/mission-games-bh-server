@@ -5,13 +5,16 @@ import cors from 'cors';
 dotenv.config();
 
 import { notFound, errorHandler } from './utils/middleware.js';
-const PORT = process.env.PORT || 5000;
+import userRoutes from './routes/users.js';
+const PORT = process.env.PORT ?? 5000;
 const server = express();
 
 server.use(cookieParser());
 server.use(cors());
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
+
+server.use('/api/users', userRoutes);
 
 server.use(notFound);
 server.use(errorHandler);
