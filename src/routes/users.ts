@@ -9,11 +9,14 @@ import {
   signUpAUser,
   updateAUserById,
 } from '../controllers/users.js';
-import { loginRequired } from '../utils/middleware.js';
+import { loginRequired, adminsRoute } from '../utils/middleware.js';
 
 const router = express.Router();
 
-router.route('/').get(fetchAllUsers).post(signUpAUser);
+router
+  .route('/')
+  .get([loginRequired, adminsRoute], fetchAllUsers)
+  .post(signUpAUser);
 
 router
   .post('/login/', signInAUser)

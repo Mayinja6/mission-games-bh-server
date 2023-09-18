@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import asyncHandler from 'express-async-handler';
 import { verifyToken } from './helpers.js';
 import { CustomUserReq, NewJwtPayload } from './types.js';
+import { prisma } from '../libs/prismaDb.js';
 
 const notFound = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -48,4 +49,30 @@ const loginRequired = asyncHandler(
   }
 );
 
-export { notFound, errorHandler, loginRequired };
+const adminsRoute = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req as CustomUserReq).userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        isAdmin: true,
+      },
+    });
+
+    if (!user) {
+      res.status(400);
+      throw new Error('User not found!');
+    }
+
+    if (user.isAdmin === false) {
+      res.status(401);
+      throw new Error('Invalid user credentials!');
+    }
+
+    next();
+  }
+);
+
+export { notFound, errorHandler, loginRequired, adminsRoute };

@@ -31,6 +31,7 @@ const fetchAllUsers = asyncHandler(async (req: Request, res: Response) => {
 
 const signUpAUser = asyncHandler(async (req: Request, res: Response) => {
   const { email, firstName, lastName, password } = req.body;
+  let isAdmin = req.body.isAdmin ? true : false;
 
   if (!email || !firstName || !password || !lastName) {
     res.status(401);
@@ -48,12 +49,18 @@ const signUpAUser = asyncHandler(async (req: Request, res: Response) => {
     const hashedPassword = await hashPassword(password);
 
     const newUser = await prisma.user.create({
-      data: { email, firstName, lastName, password: hashedPassword },
+      data: { email, firstName, lastName, password: hashedPassword, isAdmin },
     });
 
     generateToken(res, { id: newUser.id });
 
-    res.status(201).json({ user: newUser });
+    res.status(201).json({
+      id: newUser.id,
+      isAdmin: newUser.isAdmin,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      email: newUser.email,
+    });
   } catch (err: unknown) {
     res.status(400);
     throw new Error((err as Error).message);
@@ -70,7 +77,14 @@ const signInAUser = asyncHandler(async (req: Request, res: Response) => {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, isAdmin: true, password: true },
+    select: {
+      id: true,
+      isAdmin: true,
+      password: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+    },
   });
 
   if (!user) {
@@ -87,7 +101,13 @@ const signInAUser = asyncHandler(async (req: Request, res: Response) => {
   try {
     generateToken(res, { id: user.id });
 
-    res.status(200).json({ user: user });
+    res.status(200).json({
+      id: user.id,
+      isAdmin: user.isAdmin,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    });
   } catch (err: unknown) {
     throw new Error((err as Error).message);
   }
@@ -117,7 +137,7 @@ const getAUserById = asyncHandler(async (req: Request, res: Response) => {
     throw new Error('User not found!');
   }
 
-  res.json({ user });
+  res.json(user);
 });
 
 const updateAUserById = asyncHandler(async (req: Request, res: Response) => {
